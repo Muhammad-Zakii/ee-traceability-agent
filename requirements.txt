@@ -1,0 +1,12 @@
+langchain
+langchain-community
+langchain-huggingface
+langgraph
+chromadb
+pypdf
+openpyxl
+fastapi
+uvicorn
+streamlit
+pandas
+sentence-transformers
