@@ -1,6 +1,6 @@
 # 🚗 Privacy-First Automotive E/E Traceability Agent
 
-An Agentic AI application built for automotive engineering workflows. This system utilizes **LangGraph** and **Retrieval-Augmented Generation (RAG)** to automate the validation of Electrical/Electronic (E/E) requirements against technical specifications, outputting results directly into automated **Excel** traceability matrices.
+An Agentic AI application built for automotive engineering workflows. This system utilizes **LangGraph** and **Retrieval-Augmented Generation (RAG)** to automate the validation of Electrical/Electronic (E/E) requirements against technical specifications, outputting results directly into automated **Excel** traceability matrices and visualizing real-time telemetry.
 
 Crucially, this system is **100% localized and open-source**. It uses **Ollama (Llama 3)** and **Hugging Face** embeddings to ensure zero proprietary engineering data is transmitted to third-party cloud providers, strictly adhering to enterprise data security standards.
 
@@ -19,6 +19,22 @@ The system securely processes proprietary automotive PDF manuals into a local Ch
 ### 3. LangGraph Agent Validation & Logic Checking
 The AI agent evaluates functional requirements (e.g., operating voltage, current draw) against the ingested context and logically flags component mismatches, generating detailed engineering notes.
 ![Agent Validation Results](assets/agent-validation-results.png)
+
+### 4. Real-Time KPI Dashboard
+Built-in telemetry visualizes engineering KPIs (Requirements Processed, Conflict Detection Rate) and AI performance metrics (Validation Latency, RAG Success) using Pandas and Matplotlib.
+![KPI Dashboard](assets/dashboard.png) *(Note: Replace with your actual dashboard screenshot filename)*
+
+---
+
+## 🎯 Business Motivation
+In on-board network systems engineering, manually checking thousands of functional requirements (often managed in Excel) against massive supplier PDF specifications leads to traceability gaps and human error. This project acts as an automated engineering assistant to validate power, communication, and hardware constraints using GenAI, significantly accelerating the engineering pipeline.
+
+## 🏗️ Architecture & Tech Stack
+- **AI Models**: Ollama (Llama 3 local inference), Hugging Face (`all-MiniLM-L6-v2` embeddings)
+- **Orchestration**: LangGraph (Stateful multi-step agent workflow), LangChain
+- **Vector DB**: ChromaDB (Local persistent storage)
+- **Data Processing & Analytics**: Python (`pandas`, `matplotlib`, `openpyxl`, `pypdf`) for dashboarding and automated Excel KPI generation
+- **Backend & UI**: FastAPI, Streamlit
 
 ---
 
