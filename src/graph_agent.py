@@ -1,3 +1,4 @@
+import time
 from typing import TypedDict, List, Dict
 from langgraph.graph import StateGraph, END
 from langchain_ollama import ChatOllama
@@ -36,11 +37,13 @@ def retrieve_and_analyze(state: AgentState):
     
     query = f"Component: {current_req['component']}, Requirement: {current_req['description']}"
     
-    # Retrieve context
+    # --- RAG TRACKING ---
     docs = retriever.invoke(query)
+    rag_context_found = len(docs) > 0 # Returns True if ChromaDB found relevant chunks, False otherwise
     context = "\n".join([doc.page_content for doc in docs])
     
     # Analyze via Local LLM with Strict Engineering Rules
+    # NOTE: Added 'CATEGORY' to the prompt so the LLM generates data for the Pareto chart!
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are a strict automotive E/E systems engineer validating hardware requirements.
         
@@ -51,6 +54,7 @@ def retrieve_and_analyze(state: AgentState):
         
         You MUST output your response in this exact format:
         STATUS: VALID (or CONFLICT)
+        CATEGORY: If CONFLICT, provide a 2-3 word category (e.g., Voltage Mismatch, Missing Spec, Protocol Error). If VALID, output None.
         REASON: Your short explanation here.
         
         Do not output any other text."""),
@@ -60,7 +64,13 @@ def retrieve_and_analyze(state: AgentState):
     chain = prompt | llm
     
     print("🤖 Waiting for local Llama 3 response...")
+    
+    # --- LATENCY TRACKING ---
+    start_time = time.time()
     response = chain.invoke({"context": context, "requirement": query}).content
+    end_time = time.time()
+    
+    execution_time = round(end_time - start_time, 2)
     print(f"📝 Raw Response: {response.strip()}")
     
     # --- BULLETPROOF PARSING LOGIC ---
@@ -79,23 +89,37 @@ def retrieve_and_analyze(state: AgentState):
         status = "VALID"
     else:
         status = "UNKNOWN"
-        
+
+    # Smart Category Extraction (for the Pareto Chart)
+    error_category = "None"
+    for line in response.split('\n'):
+        if line.upper().startswith("CATEGORY:"):
+            error_category = line[9:].strip()
+            break
+            
     # Smart Reason Extraction
     notes = response
     if "REASON:" in response_upper:
         start_idx = response_upper.find("REASON:") + 7
         notes = response[start_idx:].strip()
     
-    # Clean up any leftover status text in the notes
+    # Clean up any leftover status or category text in the notes
     notes = notes.replace("STATUS: CONFLICT", "").replace("STATUS: VALID", "").strip()
+    if "CATEGORY:" in notes.upper():
+        notes = "\n".join([line for line in notes.split('\n') if not line.upper().startswith("CATEGORY:")])
+        
     if notes.startswith("-") or notes.startswith(":"):
         notes = notes[1:].strip()
         
+    # --- FINAL RESULT PAYLOAD ---
     result = {
         "req_id": current_req.get("req_id", f"REQ-{idx}"),
         "component": current_req.get("component"),
         "status": status,
-        "notes": notes
+        "reasoning": notes,
+        "latency_seconds": execution_time,       # Fixes 0.0s issue on dashboard
+        "rag_context_found": rag_context_found,  # Fixes N/A% issue on dashboard
+        "error_category": error_category         # Fixes Pareto chart error
     }
     
     results.append(result)
