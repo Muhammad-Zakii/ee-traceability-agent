@@ -1,28 +1,58 @@
 # 🚗 Privacy-First Automotive E/E Traceability Agent
 
-An Agentic AI application built for automotive engineering workflows. This system utilizes **LangGraph** and **Retrieval-Augmented Generation (RAG)** to automate the validation of Electrical/Electronic (E/E) requirements against technical specifications, outputting results directly into automated **Excel** traceability matrices and visualizing real-time telemetry.
+## 🖥️ Dashboard Overview
+The application is split into two main tabs to separate the engineering workflow from the management analytics:
 
-Crucially, this system is **100% localized and open-source**. It uses **Ollama (Llama 3)** and **Hugging Face** embeddings to ensure zero proprietary engineering data is transmitted to third-party cloud providers, strictly adhering to enterprise data security standards.
+* **🤖 Agent UI (Tab 1):** The control center. This is where engineers upload PDF manuals, input requirements, and trigger the local LangGraph AI to perform validations.
+* **📊 KPI Dashboard (Tab 2):** The reporting center. This is where engineering managers can view real-time metrics, track latency, and view Pareto charts to prioritize which requirement conflicts to fix first.
 
 ---
 
-## 📸 Live Application Demo
+## 🎯 Project Overview
+This tool is a local AI agent designed for Automotive Electrical/Electronic (E/E) engineering teams. It automates the tedious process of cross-referencing hundreds of hardware requirements against massive supplier PDF manuals. 
 
-### 1. Dashboard Overview
-A secure, locally hosted Streamlit interface built for systems engineers to interact with the LangGraph validation agent.
-![Dashboard Overview](assets/dashboard-overview.png)
+**Privacy-First:** Because automotive data is highly confidential, this entire AI pipeline runs 100% locally on your machine. No engineering data is ever sent to the cloud (OpenAI, Google, etc.).
 
-### 2. Ingesting Technical Specifications (RAG)
-The system securely processes proprietary automotive PDF manuals into a local ChromaDB vector store, ensuring IP remains on-premise.
-![Knowledge Base Upload](assets/knowledge-base-upload.png)
+---
 
-### 3. LangGraph Agent Validation & Logic Checking
-The AI agent evaluates functional requirements (e.g., operating voltage, current draw) against the ingested context and logically flags component mismatches, generating detailed engineering notes.
-![Agent Validation Results](assets/agent-validation-results.png)
+## 🚀 How to Use the App (Step-by-Step)
 
-### 4. Real-Time KPI Dashboard
-Built-in telemetry visualizes engineering KPIs (Requirements Processed, Conflict Detection Rate) and AI performance metrics (Validation Latency, RAG Success) using Pandas and Matplotlib.
-![KPI Dashboard](assets/dashboard.png) *(Note: Replace with your actual dashboard screenshot filename)*
+When you open the application, you will start in the **Agent UI** tab. Follow these steps, which match exactly with the numbering on your screen:
+
+### Step 1: Ingest Technical Specification (PDF)
+*(Matches "1. Ingest Technical Specification" in the UI)*
+
+Before the AI can check your requirements, it needs to read the manual. 
+* Click **Browse files** and upload an engineering PDF.
+* Click **Process PDF to Local Vector DB**.
+* *What happens behind the scenes:* The AI reads the document and securely stores it in a local database so it can instantly recall specific technical specs later.
+
+![Step 1: Upload PDF](assets/step1-upload-pdf.png)
+
+### Step 2: Validate Requirements
+*(Matches "2. Validate Requirements via LangGraph" in the UI)*
+
+Now that the AI knows the manual, you can test your requirements against it.
+* Review the JSON payload containing the requirements you want to test (e.g., Voltage limits, CAN bus protocols).
+* Click **Run Local AI Validation Agent**.
+* *What happens behind the scenes:* The AI acts as an engineering validator. It compares each requirement to the PDF, flags any conflicts, and automatically generates an Excel Traceability Matrix report.
+
+![Step 2: Input Requirements](assets/step2a-run-validation-input.png)
+*Above: Submitting the engineering requirements.*
+
+![Step 2: Validation Results](assets/step2b-run-validation-results.png)
+*Above: The AI automatically cross-references and flags conflicts.*
+
+### Step 3: Review the KPI Dashboard
+Once the AI finishes running, click over to the **📊 KPI Dashboard** tab at the top of the screen to view the results.
+* **Top Metrics:** Instantly see how many requirements were processed and how many conflicts require manual engineering review.
+* **Pareto Analysis:** A dynamic chart automatically sorts the errors by category (e.g., "Voltage Mismatch"). Following the 80/20 rule, this tells engineering managers exactly which category of errors they should focus on fixing first to resolve the majority of system conflicts.
+
+![Step 3: KPI Metrics](assets/step3a-kpi-metrics.png)
+*Above: High-level metrics tracking processing volume and AI latency.*
+
+![Step 3: Pareto Analysis](assets/step3b-pareto-analysis.png)
+*Above: The 80/20 Pareto chart prioritizing the most frequent requirement errors.*
 
 ---
 
