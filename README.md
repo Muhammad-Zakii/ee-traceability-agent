@@ -6,6 +6,7 @@ The application is split into two main tabs to separate the engineering workflow
 * **🤖 Agent UI (Tab 1):** The control center. This is where engineers upload PDF manuals, input requirements, and trigger the local LangGraph AI to perform validations.
 * **📊 KPI Dashboard (Tab 2):** The reporting center. This is where engineering managers can view real-time metrics, track latency, and view Pareto charts to prioritize which requirement conflicts to fix first.
 
+![Step 1: Upload PDF](assets/tabs.png)
 ---
 
 ## 🎯 Project Overview
