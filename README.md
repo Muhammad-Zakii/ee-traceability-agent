@@ -16,6 +16,44 @@ This tool is a local AI agent designed for Automotive Electrical/Electronic (E/E
 
 ---
 
+## 🏗️ Simple System Architecture
+
+This diagram shows how the information flows through the local agent without ever leaving your computer:
+
+```mermaid
+graph TD
+    %% Styling
+    classDef input fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px,color:#000
+    classDef privacy fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#000
+    classDef output fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#000
+    classDef agent fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px,color:#000
+
+    subgraph Input ["(A) Engineer Inputs"]
+        PDF["📄 Supplier Manual (PDF)"]:::input
+        REQ["📋 Requirements (JSON)"]:::input
+    end
+
+    subgraph LocalZone ["(B) Privacy Zone: 100% Local Machine 🔒"]
+        UI["💻 Streamlit / FastAPI UI"]:::agent
+        Agent["🤖 LangGraph AI Agent (The Brain)"]:::agent
+        DB["🗄️ ChromaDB (Local Vector DB) 🔒"]:::privacy
+        LLM["🧠 Ollama (Local Llama 3) 🔒"]:::privacy
+
+        UI -->|Triggers validation| Agent
+        Agent <-->|Retrieves context| DB
+        Agent <-->|Analyzes rules| LLM
+    end
+
+    subgraph Output ["(C) Deliverables"]
+        Dash["📊 Manager KPI Dashboard"]:::output
+        Excel["📗 Excel Traceability Matrix"]:::output
+    end
+
+    PDF -->|Uploaded to| UI
+    REQ -->|Uploaded to| UI
+    Agent -->|Renders| Dash
+    Agent -->|Exports| Excel
+
 ## 🚀 How to Use the App (Step-by-Step)
 
 When you open the application, you will start in the **Agent UI** tab. Follow these steps, which match exactly with the numbering on your screen:
@@ -111,3 +149,38 @@ uvicorn src.api:app --reload
 Open a new terminal window and run:
 streamlit run app.py
 ```
+
+```
+
+graph TD
+    %% Styling
+    classDef input fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px,color:#000
+    classDef privacy fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#000
+    classDef output fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#000
+    classDef agent fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px,color:#000
+
+    subgraph Input ["(A) Engineer Inputs"]
+        PDF["📄 Supplier Manual (PDF)"]:::input
+        REQ["📋 Requirements (JSON)"]:::input
+    end
+
+    subgraph LocalZone ["(B) Privacy Zone: 100% Local Machine 🔒"]
+        UI["💻 Streamlit / FastAPI UI"]:::agent
+        Agent["🤖 LangGraph AI Agent (The Brain)"]:::agent
+        DB["🗄️ ChromaDB (Local Vector DB) 🔒"]:::privacy
+        LLM["🧠 Ollama (Local Llama 3) 🔒"]:::privacy
+
+        UI -->|Triggers validation| Agent
+        Agent <-->|Retrieves context| DB
+        Agent <-->|Analyzes rules| LLM
+    end
+
+    subgraph Output ["(C) Deliverables"]
+        Dash["📊 Manager KPI Dashboard"]:::output
+        Excel["📗 Excel Traceability Matrix"]:::output
+    end
+
+    PDF -->|Uploaded to| UI
+    REQ -->|Uploaded to| UI
+    Agent -->|Renders| Dash
+    Agent -->|Exports| Excel
