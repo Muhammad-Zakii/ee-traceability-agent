@@ -20,6 +20,12 @@ This tool is a local AI agent designed for Automotive Electrical/Electronic (E/E
 
 This diagram shows how the information flows through the local agent without ever leaving your computer:
 
+---
+
+## 🏗️ Simple System Architecture
+
+This diagram shows how the information flows through the local agent without ever leaving your computer:
+
 ```mermaid
 graph TD
     %% Styling
@@ -53,7 +59,7 @@ graph TD
     REQ -->|Uploaded to| UI
     Agent -->|Renders| Dash
     Agent -->|Exports| Excel
-
+```
 ## 🚀 How to Use the App (Step-by-Step)
 
 When you open the application, you will start in the **Agent UI** tab. Follow these steps, which match exactly with the numbering on your screen:
