@@ -16,11 +16,6 @@ This tool is a local AI agent designed for On-Board Network Systems & Functions 
 
 ---
 
-## 🏗️ Simple System Architecture
-
-This diagram shows how the information flows through the local agent without ever leaving your computer:
-
----
 
 ## 🏗️ Simple System Architecture
 
