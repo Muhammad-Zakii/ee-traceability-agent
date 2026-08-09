@@ -9,7 +9,6 @@ __pycache__/
 *.pyc
 
 # Data & Databases
-data/sample_specs.pdf
 data/input_requirements.xlsx
 data/output/*.xlsx
 data/chromadb/
