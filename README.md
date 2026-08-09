@@ -22,38 +22,44 @@ This tool is a local AI agent designed for On-Board Network Systems & Functions 
 This diagram shows how the information flows through the local agent without ever leaving your computer:
 
 ```mermaid
-graph TD
-    %% Styling
-    classDef input fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px,color:#000
-    classDef privacy fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#000
-    classDef output fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#000
-    classDef agent fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px,color:#000
-
-    subgraph Input ["(A) Engineer Inputs"]
-        PDF["📄 Supplier Manual (PDF)"]:::input
-        REQ["📋 Requirements (JSON)"]:::input
+graph LR
+    subgraph "1. User Input Layer (What the Engineer Does)"
+        User((E/E Domain Expert))
+        
+        Specs["📄 Supplier Specification Manuals<br/>(e.g., Bosch_BMS_v2.pdf, Continental_Radar.pdf)"]
+        Reqs["📊 E/E Requirements List<br/>(e.g., 'Max Power < 5W' via Excel/JSON)"]
+        
+        User -->|Selects Files| Specs
+        User -->|Defines Rules| Reqs
+        
+        Specs -->|Drag & Drop into UI| UI[Streamlit Web Interface]
+        Reqs -->|Upload into UI| UI
     end
 
-    subgraph LocalZone ["(B) Privacy Zone: 100% Local Machine 🔒"]
-        UI["💻 Streamlit / FastAPI UI"]:::agent
-        Agent["🤖 LangGraph AI Agent (The Brain)"]:::agent
-        DB["🗄️ ChromaDB (Local Vector DB) 🔒"]:::privacy
-        LLM["🧠 Ollama (Local Llama 3) 🔒"]:::privacy
-
-        UI -->|Triggers validation| Agent
-        Agent <-->|Retrieves context| DB
-        Agent <-->|Analyzes rules| LLM
+    subgraph "2. Privacy-Safe RAG Engine (100% Local Execution)"
+        UI -->|Send files securely| API[FastAPI Backend]
+        
+        API -->|"1. Create Embeddings (Convert text to numbers)<br/>2. Tag text with original PDF filename"| DB[(ChromaDB Vector Database)]
+        
+        API -->|Orchestrate Logic| Agent[LangGraph AI Agent]
+        
+        Agent <-->|"Find relevant paragraphs &<br/>remember which PDF they came from"| DB
+        Agent <-->|Strict 'Exact Metric Matching'| LLM[Local Llama 3 via Ollama]
     end
 
-    subgraph Output ["(C) Deliverables"]
-        Dash["📊 Manager KPI Dashboard"]:::output
-        Excel["📗 Excel Traceability Matrix"]:::output
+    subgraph "3. Actionable Business Output (What the Manager Sees)"
+        Agent -->|Real-time Metrics| Dash["📊 KPI & Pareto Dashboard<br/>(Visualizes error types: Power, Voltage, etc.)"]
+        Agent -->|Auto-Generated| Excel["📑 Traceability Matrix (Excel)<br/>(Highlights Conflicts & exact PDF name)"]
     end
 
-    PDF -->|Uploaded to| UI
-    REQ -->|Uploaded to| UI
-    Agent -->|Renders| Dash
-    Agent -->|Exports| Excel
+    %% Styling to make it look professional
+    classDef inputLayer fill:#f8f9fa,stroke:#6c757d,stroke-width:2px,color:#000;
+    classDef coreLayer fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px,color:#000;
+    classDef outputLayer fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000;
+
+    class UI,Specs,Reqs inputLayer;
+    class API,DB,Agent,LLM coreLayer;
+    class Dash,Excel outputLayer;
 ```
 ## 🚀 How to Use the App (Step-by-Step)
 
