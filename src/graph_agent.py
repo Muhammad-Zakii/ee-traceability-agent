@@ -37,24 +37,34 @@ def retrieve_and_analyze(state: AgentState):
     
     query = f"Component: {current_req['component']}, Requirement: {current_req['description']}"
     
-    # --- RAG TRACKING ---
+    # --- RAG TRACKING & METADATA INJECTION ---
     docs = retriever.invoke(query)
-    rag_context_found = len(docs) > 0 # Returns True if ChromaDB found relevant chunks, False otherwise
-    context = "\n".join([doc.page_content for doc in docs])
+    rag_context_found = len(docs) > 0 
+    
+    # NEW: We now inject the exact filename from ChromaDB metadata into the text the AI reads!
+    context_parts = []
+    for doc in docs:
+        source_file = doc.metadata.get("source", "Unknown Document")
+        context_parts.append(f"Content: {doc.page_content}\nSource File: {source_file}")
+    context = "\n\n".join(context_parts)
     
     # Analyze via Local LLM with Strict Engineering Rules
-    # NOTE: Added 'CATEGORY' to the prompt so the LLM generates data for the Pareto chart!
+    # NEW: Added 'SOURCE' to both the rules and the output format
+    # Analyze via Local LLM with Strict Engineering Rules
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are a strict automotive E/E systems engineer validating hardware requirements.
         
         RULES FOR VALIDATION:
-        1. VOLTAGE: If the requirement asks for a specific voltage (e.g., 48V) and the context specifies a different voltage (e.g., 12V), it is a CONFLICT.
-        2. MISSING DATA: If the context does not explicitly support the requirement, it is a CONFLICT.
-        3. ALIGNMENT: If the capabilities perfectly match, it is VALID.
+        1. EXACT METRIC MATCHING: You must evaluate the EXACT metric requested (e.g., Power, Temperature, Voltage, Protocol). Do NOT substitute one metric for another (e.g., do not evaluate voltage if the requirement asks for power).
+        2. CONFLICT DETECTED: If the document explicitly states a value that violates the limit in the requirement (e.g., req says < 5W, but document says 8.5W), it is a CONFLICT.
+        3. MISSING DATA: If the context does not explicitly mention the metric requested, it is a CONFLICT (e.g., Missing Spec).
+        4. VALID: If the document's capabilities perfectly align with or support the requirement, it is VALID.
+        5. SOURCE TRACKING: You must identify which 'Source File' provided the information used to make your decision.
         
         You MUST output your response in this exact format:
         STATUS: VALID (or CONFLICT)
-        CATEGORY: If CONFLICT, provide a 2-3 word category (e.g., Voltage Mismatch, Missing Spec, Protocol Error). If VALID, output None.
+        CATEGORY: If CONFLICT, provide a 2-3 word category (e.g., Power Mismatch, Voltage Mismatch). If VALID, output None.
+        SOURCE: The exact name of the source file (e.g., document.pdf). If not found, output Unknown.
         REASON: Your short explanation here.
         
         Do not output any other text."""),
@@ -71,7 +81,7 @@ def retrieve_and_analyze(state: AgentState):
     end_time = time.time()
     
     execution_time = round(end_time - start_time, 2)
-    print(f"📝 Raw Response: {response.strip()}")
+    print(f"📝 Raw Response:\n{response.strip()}")
     
     # --- BULLETPROOF PARSING LOGIC ---
     response_upper = response.upper()
@@ -90,11 +100,18 @@ def retrieve_and_analyze(state: AgentState):
     else:
         status = "UNKNOWN"
 
-    # Smart Category Extraction (for the Pareto Chart)
+    # Smart Category Extraction
     error_category = "None"
     for line in response.split('\n'):
         if line.upper().startswith("CATEGORY:"):
             error_category = line[9:].strip()
+            break
+            
+    # NEW: Smart Source Extraction
+    source_document = "Unknown"
+    for line in response.split('\n'):
+        if line.upper().startswith("SOURCE:"):
+            source_document = line[7:].strip()
             break
             
     # Smart Reason Extraction
@@ -103,10 +120,13 @@ def retrieve_and_analyze(state: AgentState):
         start_idx = response_upper.find("REASON:") + 7
         notes = response[start_idx:].strip()
     
-    # Clean up any leftover status or category text in the notes
+    # Clean up any leftover status, category, or source text in the notes
     notes = notes.replace("STATUS: CONFLICT", "").replace("STATUS: VALID", "").strip()
-    if "CATEGORY:" in notes.upper():
-        notes = "\n".join([line for line in notes.split('\n') if not line.upper().startswith("CATEGORY:")])
+    clean_notes = []
+    for line in notes.split('\n'):
+        if not (line.upper().startswith("CATEGORY:") or line.upper().startswith("SOURCE:")):
+            clean_notes.append(line)
+    notes = "\n".join(clean_notes).strip()
         
     if notes.startswith("-") or notes.startswith(":"):
         notes = notes[1:].strip()
@@ -117,9 +137,10 @@ def retrieve_and_analyze(state: AgentState):
         "component": current_req.get("component"),
         "status": status,
         "reasoning": notes,
-        "latency_seconds": execution_time,       # Fixes 0.0s issue on dashboard
-        "rag_context_found": rag_context_found,  # Fixes N/A% issue on dashboard
-        "error_category": error_category         # Fixes Pareto chart error
+        "latency_seconds": execution_time,       
+        "rag_context_found": rag_context_found,  
+        "error_category": error_category,         
+        "source_document": source_document       # NEW: Adding source document to the output!
     }
     
     results.append(result)

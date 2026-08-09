@@ -4,8 +4,6 @@ import requests
 import os
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
-from src.vector_store import build_vector_store
-from src.config import DATA_DIR
 
 st.set_page_config(page_title="E/E Traceability Agent", layout="wide")
 
@@ -17,53 +15,60 @@ st.markdown("""
 
 st.divider()
 
-# --- Initialize Session State for the Dashboard ---
 if 'agent_results' not in st.session_state:
     st.session_state.agent_results = None
 
-# --- Create Tabs ---
 tab1, tab2 = st.tabs(["🤖 Agent UI", "📊 KPI Dashboard"])
 
 # ==========================================
 # TAB 1: THE TRACEABILITY AGENT
 # ==========================================
 with tab1:
-    # 1. Knowledge Base Building
-    st.header("1. Ingest Technical Specification (PDF)")
-    uploaded_pdf = st.file_uploader("Upload PDF Spec (e.g., E/E Component Manual)", type="pdf")
+    st.header("1. Ingest Technical Specifications (PDFs)")
+    
+    # MAGIC LINE: accept_multiple_files=True
+    uploaded_pdfs = st.file_uploader("Upload Supplier Manuals (PDF)", type="pdf", accept_multiple_files=True)
 
-    if uploaded_pdf and st.button("Process PDF to Local Vector DB"):
-        pdf_path = DATA_DIR / "uploaded_spec.pdf"
-        
-        os.makedirs(DATA_DIR, exist_ok=True)
-        
-        with open(pdf_path, "wb") as f:
-            f.write(uploaded_pdf.getbuffer())
-        
-        with st.spinner("Embedding documents locally via Hugging Face into ChromaDB..."):
-            build_vector_store(str(pdf_path))
-            st.success("Knowledge Base successfully updated locally!")
+    if st.button("Process PDFs to Local Vector DB"):
+        if uploaded_pdfs:
+            with st.spinner(f"Sending {len(uploaded_pdfs)} documents to the backend for processing..."):
+                try:
+                    # Prepare multiple files to send to FastAPI
+                    files_to_send = [("files", (file.name, file.getvalue(), "application/pdf")) for file in uploaded_pdfs]
+                    
+                    # Hit the new FastAPI endpoint
+                    response = requests.post("http://localhost:8000/upload-pdfs", files=files_to_send)
+                    
+                    if response.status_code == 200:
+                        st.success(f"✅ {len(uploaded_pdfs)} Knowledge Base documents successfully embedded into ChromaDB!")
+                    else:
+                        st.error(f"Backend Error: {response.text}")
+                except requests.exceptions.ConnectionError:
+                    st.error("Connection failed. Is the FastAPI server running on port 8000?")
+        else:
+            st.warning("Please upload at least one PDF.")
 
     st.divider()
 
-    # 2. Validation Trigger
     st.header("2. Validate Requirements via LangGraph")
     st.write("Simulating requirements input (JSON payload sent to backend):")
 
     mock_requirements = [
-        # Original 4 requirements
-        {"req_id": "REQ-001", "component": "ECU_Gateway", "description": "Must support 48V operating voltage."},
-        {"req_id": "REQ-002", "component": "Infotainment_Display", "description": "Maximum power draw should not exceed 15A."},
-        {"req_id": "REQ-003", "component": "Battery_Management", "description": "Operating temperature up to 85C."},
-        {"req_id": "REQ-004", "component": "Radar_Sensor", "description": "CAN FD communication required."},
-        
-        # 6 New realistic automotive requirements added for the demo
-        {"req_id": "REQ-005", "component": "Body_Control_Module", "description": "Must conform to LIN standard ISO 17989 for sensor communication."},
-        {"req_id": "REQ-006", "component": "Engine_ECU", "description": "Must withstand Grade 1 ambient temperature ranges of -40°C to +125°C."},
-        {"req_id": "REQ-007", "component": "ADAS_Domain_Controller", "description": "Requires two CAN FD channels with a data baud rate of 2Mbps."},
-        {"req_id": "REQ-008", "component": "Steering_ECU", "description": "FlexRay protocol must be supported for real-time chassis control."},
-        {"req_id": "REQ-009", "component": "HVAC_Module", "description": "Input needs to survive 12V cold crank drops into single digits."},
-        {"req_id": "REQ-010", "component": "Telematics_Unit", "description": "Must support Automotive Ethernet for high-bandwidth data transfer."}
+        # --- TELEMATICS & GATEWAY ECU (Tests sample_specs.pdf) ---
+        {"req_id": "REQ-001", "component": "ECU_Gateway", "description": "Maximum current draw under peak conditions must not exceed 15A."}, # VALID
+        {"req_id": "REQ-002", "component": "ECU_Gateway", "description": "Must support 48V nominal operating voltage for hybrid networks."}, # CONFLICT (Doc says 12V)
+        {"req_id": "REQ-003", "component": "Telematics_Unit", "description": "Sleep mode current consumption must be under 5 mA."}, # VALID
+        {"req_id": "REQ-004", "component": "Telematics_Unit", "description": "Requires continuous normal operation during extreme voltage drops down to 6V."}, # CONFLICT (Doc says 9V drop tolerance)
+
+        # --- BATTERY MANAGEMENT SYSTEM (Tests Bosch_BMS_Controller_v2.pdf) ---
+        {"req_id": "REQ-005", "component": "Battery_Management", "description": "Must support 400V nominal high-voltage architectures."}, # VALID
+        {"req_id": "REQ-006", "component": "Battery_Management", "description": "Operating temperature limit must support up to 65°C."}, # CONFLICT (Doc says 75°C max)
+        {"req_id": "REQ-007", "component": "Battery_Management", "description": "Must utilize FlexRay protocol for primary vehicle network communication."}, # CONFLICT (Doc says CAN 2.0B)
+
+        # --- ADAS RADAR SENSOR (Tests Continental_ADAS_Radar_Sensor.pdf) ---
+        {"req_id": "REQ-008", "component": "Radar_Sensor", "description": "High-speed CAN FD communication protocols are required."}, # VALID
+        {"req_id": "REQ-009", "component": "Radar_Sensor", "description": "Sensor must survive maximum ambient temperatures of 120°C."}, # VALID (Doc says up to 125°C)
+        {"req_id": "REQ-010", "component": "Radar_Sensor", "description": "Maximum active power consumption must be strictly under 5W."} # CONFLICT (Doc says 8.5W)
     ]
     st.json(mock_requirements)
 
@@ -77,29 +82,25 @@ with tab1:
                 
                 if response.status_code == 200:
                     data = response.json()
-                    st.success(f"Excel Report automatically generated and saved at: `{data.get('report_path', 'Local Directory')}`")
+                    st.success(f"Excel Report generated at: `{data.get('report_path', 'Local Directory')}`")
                     
-                    # LOAD STRICTLY FROM BACKEND RESPONSE
                     df = pd.DataFrame(data['results'])
                     st.session_state.agent_results = df
                     
                     def color_status(val):
-                        if val == 'VALID':
-                            return 'color: green; font-weight: bold'
-                        elif val == 'CONFLICT':
-                            return 'color: red; font-weight: bold'
+                        if val == 'VALID': return 'color: green; font-weight: bold'
+                        elif val == 'CONFLICT': return 'color: red; font-weight: bold'
                         return 'color: orange'
                     
-                    # Render dataframe safely
                     if 'status' in df.columns:
                         st.dataframe(df.style.map(color_status, subset=['status']), use_container_width=True)
                     else:
                         st.dataframe(df, use_container_width=True)
                 else:
-                    st.error(f"API call failed with status code {response.status_code}.")
+                    st.error(f"API call failed: {response.status_code}")
                     
             except requests.exceptions.ConnectionError:
-                st.error("Connection failed. Please ensure the FastAPI server is running on http://localhost:8000 (run `uvicorn src.api:app --reload`).")
+                st.error("Connection failed. Please ensure FastAPI server is running.")
 
 # ==========================================
 # TAB 2: THE DATA DASHBOARD (STRICT LLM DATA ONLY)
@@ -159,13 +160,15 @@ with tab2:
                     plt.xticks(rotation=35, ha='right', fontsize=5)
                     plt.yticks(fontsize=5)
                     st.pyplot(fig, use_container_width=False)
+                    plt.close(fig)  # <--- FIX 1: Closes memory leak for bar chart
                 else:
                     st.info("No status data available.")
 
         with col_data:
             st.markdown("**Raw Analytics Log**")
             # Only display columns that actually exist in the API payload
-            display_cols = [col for col in ['req_id', 'component', 'status', 'latency_seconds'] if col in df.columns]
+            # FIX 2: Added 'source_document' so it shows up on the frontend!
+            display_cols = [col for col in ['req_id', 'component', 'status', 'source_document', 'latency_seconds'] if col in df.columns]
             st.dataframe(df[display_cols] if display_cols else df, width="stretch")
 
         st.divider()
@@ -202,6 +205,7 @@ with tab2:
                     ax2.axhline(80, color='gray', linestyle='dashed', alpha=0.7)
                     
                     st.pyplot(fig2)
+                    plt.close(fig2)  # <--- FIX 1: Closes memory leak for Pareto chart
             else:
                 st.success("No conflicts detected by the LLM! All requirements are valid.")
         else:
