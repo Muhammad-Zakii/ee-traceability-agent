@@ -32,16 +32,16 @@ graph LR
         User -->|Selects Files| Specs
         User -->|Defines Rules| Reqs
         
-        Specs -->|Drag & Drop into UI| UI[Streamlit Web Interface]
-        Reqs -->|Upload into UI| UI
+        Specs -->|1. Drag & Drop files| UI["Streamlit Web Interface<br/>(User-controlled workflow)"]
+        Reqs -->|2. Upload/Input data| UI
     end
 
     subgraph "2. Privacy-Safe RAG Engine (100% Local Execution)"
-        UI -->|Send files securely| API[FastAPI Backend]
+        UI -->|3. Clicks 'Process PDFs' button| API[FastAPI Backend]
         
-        API -->|"1. Create Embeddings (Convert text to numbers)<br/>2. Tag text with original PDF filename"| DB[(ChromaDB Vector Database)]
+        API -->|"Create Embeddings (Convert text to numbers)<br/>& Tag text with original PDF filename"| DB[(ChromaDB Vector Database)]
         
-        API -->|Orchestrate Logic| Agent[LangGraph AI Agent]
+        UI -->|4. Clicks 'Run Validation' button| Agent[LangGraph AI Agent]
         
         Agent <-->|"Find relevant paragraphs &<br/>remember which PDF they came from"| DB
         Agent <-->|Strict 'Exact Metric Matching'| LLM[Local Llama 3 via Ollama]
