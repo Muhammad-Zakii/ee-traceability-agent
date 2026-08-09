@@ -10,17 +10,12 @@ The application is split into two main tabs to separate the engineering workflow
 ---
 
 ## 🎯 Project Overview
-This tool is a local AI agent designed for Automotive Electrical/Electronic (E/E) engineering teams. It automates the tedious process of cross-referencing hundreds of hardware requirements against massive supplier PDF manuals. 
+This tool is a local AI agent designed for On-Board Network Systems & Functions team. It automates the tedious process of cross-referencing hundreds of hardware requirements against massive supplier PDF manuals. 
 
 **Privacy-First:** Because automotive data is highly confidential, this entire AI pipeline runs 100% locally on your machine. No engineering data is ever sent to the cloud (OpenAI, Google, etc.).
 
 ---
 
-## 🏗️ Simple System Architecture
-
-This diagram shows how the information flows through the local agent without ever leaving your computer:
-
----
 
 ## 🏗️ Simple System Architecture
 
