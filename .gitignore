@@ -19,5 +19,5 @@ data/chromadb/
 Thumbs.db
 
 # Ignore Vector Database folders
-chroma_db/
-chromadb/
+data/chroma_db/
+data/chromadb/
