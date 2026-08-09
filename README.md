@@ -1,13 +1,6 @@
 # 🚗 Privacy-First Automotive E/E Traceability Agent
 
-## 🖥️ Dashboard Overview
-The application is split into two main tabs to separate the engineering workflow from the management analytics:
 
-* **🤖 Agent UI (Tab 1):** The control center. This is where engineers upload PDF manuals, input requirements, and trigger the local LangGraph AI to perform validations.
-* **📊 KPI Dashboard (Tab 2):** The reporting center. This is where engineering managers can view real-time metrics, track latency, and view Pareto charts to prioritize which requirement conflicts to fix first.
-
-![Step 1: Upload PDF](assets/tabs.png)
----
 
 ## 🎯 Project Overview
 This tool is a local AI agent designed for On-Board Network Systems & Functions team. It automates the tedious process of cross-referencing hundreds of hardware requirements against massive supplier PDF manuals. 
@@ -62,6 +55,15 @@ graph LR
     class Dash,Excel outputLayer;
 ```
 ## 🚀 How to Use the App (Step-by-Step)
+
+## 🖥️ Dashboard Overview
+The application is split into two main tabs to separate the engineering workflow from the management analytics:
+
+* **🤖 Agent UI (Tab 1):** The control center. This is where engineers upload PDF manuals, input requirements, and trigger the local LangGraph AI to perform validations.
+* **📊 KPI Dashboard (Tab 2):** The reporting center. This is where engineering managers can view real-time metrics, track latency, and view Pareto charts to prioritize which requirement conflicts to fix first.
+
+![Step 1: Upload PDF](assets/tabs.png)
+---
 
 When you open the application, you will start in the **Agent UI** tab. Follow these steps, which match exactly with the numbering on your screen:
 
