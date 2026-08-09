@@ -17,3 +17,7 @@ data/chromadb/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Ignore Vector Database folders
+chroma_db/
+chromadb/
